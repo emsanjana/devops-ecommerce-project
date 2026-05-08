@@ -1,6 +1,12 @@
 pipeline {
     agent any
 
+    environment {
+        DOCKERHUB_CREDENTIALS = credentials('dockerhub-creds')
+        BACKEND_IMAGE = "paisanjana/ecommerce-backend"
+        FRONTEND_IMAGE = "paisanjana/ecommerce-frontend"
+    }
+
     stages {
 
         stage('Checkout') {
@@ -10,22 +16,34 @@ pipeline {
             }
         }
 
-        stage('Build Backend Docker Image') {
+        stage('Build Backend Image') {
             steps {
-                sh 'docker build -t ecommerce-backend ./backend'
+                sh "docker build -t $BACKEND_IMAGE:latest ./backend"
             }
         }
 
-        stage('Build Frontend Docker Image') {
+        stage('Build Frontend Image') {
             steps {
-                sh 'docker build -t ecommerce-frontend ./frontend'
+                sh "docker build -t $FRONTEND_IMAGE:latest ./frontend"
             }
         }
 
-        stage('List Images') {
+        stage('Login to DockerHub') {
             steps {
-                sh 'docker images'
+                sh 'echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin'
+            }
+        }
+
+        stage('Push Backend Image') {
+            steps {
+                sh "docker push $BACKEND_IMAGE:latest"
+            }
+        }
+
+        stage('Push Frontend Image') {
+            steps {
+                sh "docker push $FRONTEND_IMAGE:latest"
             }
         }
     }
-}
+}}
